@@ -283,16 +283,19 @@ def print_contributors():
 #    print("jellykells Fixed a bug")
     print("Thanks to all of them :)\n")
     time.sleep(4)
-#Variables for Main code
-CHECKINTERVAL = 3 # device pinged at this interval (seconds) when screen is unlocked min:3
-CHECKREPEAT = 2  # device must be unreachable this many times to lock
-mode = "unlocked"
+
 
 #Main code for Bluetooth-Unlock
 #Return code 0 is when the command has ran successfully
 #Return code 1 is when the command has failed to reach the device
 def main_bu_code():
+    #Variables for Main code
+    CHECKINTERVAL = 3 # device pinged at this interval (seconds) when screen is unlocked min:3
+    CHECKREPEAT = 2  # device must be unreachable this many times to lock
+    mode = "unlocked"
+    VERBOSE = True
     print("Bluetooth-Unlock is now active!")
+
     while True:
         tries = 0
         while tries < CHECKREPEAT:
@@ -313,42 +316,52 @@ def main_bu_code():
             if retcode == "Can\'t create socket: Operation not permitted":
                 print("Couldn't create a socket due to permissions")
 
-                #Unlocks when the device IS found
-                if retcode == 0 and mode == "locked":
-                    mode = "unlocked"
+            #Unlocks when the device IS found
+            if retcode == 0 and mode == "locked":
+                mode = "unlocked"
                 if ENV == "LOGINCTL":
                     os.system("loginctl unlock-session")
                 elif ENV == "KDE":
                     os.system("loginctl unlock-session")
                 elif ENV == "GNOME":
-                    os.system("gnome-screensaver-command -d")
+                    os.system("loginctl unlock-session")
                 elif ENV == "XSCREENSAVER":
                     os.system("pkill xscreensaver")
                 elif ENV == "MATE":
                     os.system("mate-screensaver-command -d")
                 elif ENV == "CINNAMON":
                     os.system("cinnamon-screensaver-command -d")
+                if VERBOSE: print("Screen locked - unlocking now")
 
-                #Locks when the device ISN'T found
-                if retcode > 0 and mode == "unlocked":
-                    mode = "locked"
+            elif retcode == 0 and mode == "unlocked":
+                if VERBOSE: print("Screen unlocked - no action taken / Not really, still unlocking!")
+                os.system("loginctl unlock-session")
+
+            #Locks when the device ISN'T found
+            elif retcode > 0 and mode == "unlocked":
+                mode = "locked"
                 if ENV == "LOGINCTL":
                     os.system("loginctl lock-session")
                 elif ENV == "KDE":
                     os.system("loginctl lock-session")
                 elif ENV == "GNOME":
-                    os.system("gnome-screensaver-command -l")
+                    os.system("loginctl lock-session")
                 elif ENV == "XSCREENSAVER":
                     os.system("xscreensaver-command -lock")
                 elif ENV == "MATE":
                     os.system("mate-screensaver-command -l")
                 elif ENV == "CINNAMON":
                     os.system("cinnamon-screensaver-command -l")
+                if VERBOSE: print("Screen unlocked - locking now")
 
-                if mode == "locked":
-                    time.sleep(1)
-                else:
-                    time.sleep(CHECKINTERVAL)
+            elif retcode > 0 and mode == "locked":
+                if VERBOSE: print("Screen locked - no action taken")
+
+
+            if mode == "locked":
+                time.sleep(1)
+            else:
+                time.sleep(CHECKINTERVAL)
 
 check_version()
 check_update()
